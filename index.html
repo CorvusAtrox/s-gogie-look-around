@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html>
+<head>
+<script src="jquery.min.js"></script>
+<script src="walkabout.js"></script>
+<link rel="stylesheet" href="walkabout.css" />
+<link rel="stylesheet" href="monText.css" />
+
+<script>
+
+/* This is a comment for Javascript code. */
+// This is also a comment for Javascript code, lasting only to the end of the line
+
+/* Javascript is the core of modern webpage interactivity; it is a full programming language.
+   We load the jQuery library at the top of the page, which is a popular library for wrangling
+   styles, events, attributes, etc, for sometimes multiple HTML elements at once. We then load
+   a custom extension to the jQuery library that contains our walkabout game engine. */
+
+/* A variable to hold the "world" object for the game */
+var w;
+
+function music(track) {
+	$("audio").each(function(num, song) {
+		try {
+			song.pause();
+			song.currentTime = 0;
+		} catch(e) {}
+	});
+	$("#music"+track).each(function(num, song) {
+		try {
+			song.play();
+		} catch(e) {}
+	});
+}
+
+var gt,st;
+gt = false;
+st = false;
+
+/* Tell jQuery to run this code when the page is fully loaded. */
+$(window).on("load", function() {
+	/* Select the div tag containing all our game assets,
+	   transform it into a game frame,
+	   set w to the game world */
+	w = $(".walkaboutGame").walkabout();
+	
+	/*
+	Define the sprite sheet we're using.
+	Sheet arguments:
+	1. name of sprite sheet (multiple may be defined, we just only use one in this example)
+	2. jQuery selector of image under the game div that contains the actual sprite sheet
+	3-4. width, height of each sprite in the sheet
+	*/
+	w.sheet("cast", "#cast", 32, 32);
+
+	w.prop("block", 255,0,255);
+	
+	// setup the game
+	resetGame();
+});
+
+function talkedSticy() {
+	st = true;
+	if(gt == true){
+		w.npc("ghostus", "#ghostusSeenBlurb");
+	} else if(gt == false) {
+		w.npc("ghostus", "#ghostusSeenGogie");
+	}
+}
+
+function talkedGhostus() {
+	gt = true;
+	w.npc("ghostus", "#ghostusBlurb");
+
+	if(st) {
+		w.transitionAction = function() {
+				w.night = 1;
+				w.actor("ghostus").warp(13, 5, "bowl").faceDir(-1, 0);
+			};
+		w.trigger("bowl brawl", "#bowlingScene");
+		w.actor("sticy").faceDir(-1, 0);
+		w.actor("falchion", "cast", 128, 6).warp(8, 4, "bowl");
+		w.actor("pin1", "cast", 32, 6).warp(5, 4, "bowl");
+		w.actor("pin2", "cast", 32, 6).warp(4, 4, "bowl");
+		w.actor("pin3", "cast", 32, 6).warp(4, 3, "bowl");
+		w.actor("pin4", "cast", 32, 6).warp(3, 3, "bowl");
+		w.actor("pin5", "cast", 32, 6).warp(3, 4, "bowl");
+		w.actor("pin6", "cast", 32, 6).warp(3, 5, "bowl");
+		w.actor("pin7", "cast", 32, 6).warp(2, 6, "bowl");
+		w.actor("pin8", "cast", 32, 6).warp(2, 3, "bowl");
+		w.actor("pin9", "cast", 32, 6).warp(2, 4, "bowl");
+		w.actor("pin0", "cast", 32, 6).warp(2, 5, "bowl");
+		w.onTalk("#bowlFin", function() {
+			w.transitionAction = function() {
+				w.night = 1;
+				w.pc.warp(16, 7, "nono");
+			};
+		});
+		w.onTalk("#brawl0", function() {
+			w.pc.faceDir(-1, 0);
+		});
+		w.onTalk("#brawl0a", function() {
+			w.actor("ghostus").walk(12, 5).faceForward();
+		});
+		w.onTalk("#brawl1", function() {
+			w.actor("falchion").walk(9, 4).faceForward();
+		});
+		w.onTalk("#brawl2", function() {
+			w.actor("falchion").faceDir(-1, 0);
+		});
+		w.onTalk("#brawl2a", function() {
+			w.actor("falchion").faceDir(1, 0);
+		});
+		w.onTalk("#brawl3", function() {
+			w.actor("falchion").walk(10, 5).faceDir(1, 0);
+		});
+		w.onTalk("#brawl4", function() {
+			w.actor("ghostus").walk(11, 5).faceForward();
+		});
+	}
+}
+
+function resetGame() {
+	w.night = 0.2;
+	music(1);
+	
+	gt = false;
+	st = false;
+	
+	w.actor("falchion").setRoom("nowhere");
+	w.actor("pin1").setRoom("nowhere");
+	w.actor("pin2").setRoom("nowhere");
+	w.actor("pin3").setRoom("nowhere");
+	w.actor("pin4").setRoom("nowhere");
+	w.actor("pin5").setRoom("nowhere");
+	w.actor("pin6").setRoom("nowhere");
+	w.actor("pin7").setRoom("nowhere");
+	w.actor("pin8").setRoom("nowhere");
+	w.actor("pin9").setRoom("nowhere");
+	w.actor("pin0").setRoom("nowhere");
+	
+	w.convo("#startMessage");
+
+	// initialize actors with sprites & place in starting positions
+	// w.actor(name, spriteSheetName, baseFrameNumber, poseNumber)
+	// w.actor(...).warp(x,y,roomName)
+	// poses: 0 = up, 2 = down, 4 = left, 6 = right
+	w.actor("gogie", "cast", 0, 2).warp(6, 2, "b1");
+	w.actor("venomous", "cast", 24, 2).warp(5, 11, "b1");
+	w.actor("raser", "cast", 40, 2).warp(4, 11, "b1");
+	
+	w.actor("pawn", "cast", 32, 2).warp(9, 13, "b1");
+	
+	// give Ghostus an npc message
+	w.npc("venomous", "#venomousGogie");
+	w.npc("raser", "#raserGogie");
+	
+	// use Gogie as our viewpoint character :3
+	w.pc = w.actor("gogie");
+	
+	// define a single room, specifying the image IDs to use for the background and mask
+	var b1 = w.room("b1", "#b1Bg", "#b1Mask");
+	
+	// make magenta and red in the mask solid props;
+	// all unspecified colors are "empty"
+	
+	b1.prop("door", 255,0,0);
+	
+	w.examine("door", "#doorMessage");
+	w.npc("pawn", "#pawniardBlurb");
+	
+	w.actor("eisschwein", "cast", 120, 0).warp(21, 10, "b1");
+	w.npc("eisschwein", "#eisschweinGogie");
+	
+	b1.prop("b1 to gho", 0,127,0);
+	w.warp("b1 to gho", "gho", 4,8, 4,7).tangible = true;
+	
+	b1.prop("b1 to bot", 0,0,255);
+	w.warp("b1 to bot", "b1b", 20,0, 20,1).tangible = false;
+	
+	var gho = w.room("gho", "#ghoBg", "#ghoMask");
+	
+	w.actor("ghostus", "cast", 8, 0).warp(4, 4, "gho");
+	
+	w.npc("ghostus", "#ghostusGogie");
+	w.onTalk("#ghostusFinish", talkedGhostus);
+	w.onTalk("#ghostusSeenFinish", talkedGhostus);
+	w.onTalk("#ghostusBSeenFinish", talkedGhostus);
+	
+	gho.prop("gho out", 255,255,0);
+	w.warp("gho out", "b1", 21,1, 21,2).tangible = true;
+	
+	var b1b = w.room("b1b", "#b1bBg", "#b1bMask");
+	
+	w.actor("rhyrhy", "cast", 56, 4).warp(7, 4, "b1b");
+	w.actor("likewise", "cast", 96, 6).warp(6, 4, "b1b");
+	
+	w.npc("rhyrhy", "#rhyrhyGogie");
+	w.npc("likewise", "#likewiseGogie");
+	
+	b1b.prop("b1 to top", 0,255,0);
+	w.warp("b1 to top", "b1", 20,16, 20,15).tangible = false;
+	
+	b1b.prop("bowl in", 0,255,255);
+	w.warp("bowl in", "bowl", 17,8, 17,7).tangible = true;
+	
+	var bowl = w.room("bowl", "#bowlBg", "#bowlMask");
+	
+	w.actor("sticy", "cast", 48, 2).warp(12, 4, "bowl");
+	
+	w.npc("sticy", "#sticylipsGogie");
+	w.onTalk("#sticyFinish", talkedSticy);
+	
+	bowl.prop("bowl out", 250, 0, 0);
+	w.warp("bowl out", "b1b", 12,4, 12,5).tangible = true;
+	
+	bowl.prop("bowl brawl", 0, 128, 128);
+	w.trigger("bowl brawl", false);
+	
+	var no = w.room("nono", "#noBg", "#bowlMask");
+}
+
+</script>
+
+</head>
+<body>
+<!-- This is a comment for the HTML code -->
+
+<p><a href="javascript:void($('audio').remove())">Disable Music</a></p>
+
+<!-- this div contains all the assets we use in-game -->
+<div class="walkaboutGame">
+
+<audio id="music1" src="chargestone.ogg" loop="loop"></audio>
+
+<!-- Sprite Sheet -->
+<img id="cast" src="caveMons.png" />
+
+<!-- Room images -->
+<img id="b1Bg" src="b1.png" />
+<img id="b1Mask" src="b1mask.png" />
+<img id="b1bBg" src="b1bottom.png" />
+<img id="b1bMask" src="b1bottommask.png" />
+<img id="bowlBg" src="bowlroom.png" />
+<img id="bowlMask" src="bowlroommask.png" />
+<img id="ghoBg" src="ghoroom.png" />
+<img id="ghoMask" src="ghomask.png" />
+<img id="noBg" src="noroom.png" />
+
+<!-- conversations -->
+<ul id="startMessage">
+<li class="gogie"><b>Gogie</b>: Well, here I am, Challenger's Cave...</li>
+<li class="gogie">Kind of weird being here, but I guess it was coming at some point.</li>
+<li class="gogie">Well, anyway, I should probably get a good look around.</li>
+</ul>
+<ul id="doorMessage">
+<li class="gogie"><b>Gogie</b>: <i>I should check out the rest of the cave...</i></li>
+</ul>
+<ul id="ghostusGogie">
+<li class="ghostus"><b>Ghostus</b>: GAAAAH!</li>
+<li class="gogie"><b>Gogie</b>: ...Hey, Ghostus.</li>
+<li class="gogie">Something up?</li>
+<li class="ghostus"><b>Ghostus</b>: Something up!?</li>
+<li class="ghostus">Of course something's up!</li>
+<li class="ghostus">We have to stay in this ridiculous cave for who knows how long and put up with these Pawniard, not to mention some of ours and Bert's team.</li>
+<li class="ghostus" id="ghostusFinish">Ugh!</li>
+<li class="ghostus">It just makes me want to knock some stuff around...</li>
+</ul>
+<ul id="ghostusSeenGogie">
+<li class="ghostus"><b>Ghostus</b>: GAAAAH!</li>
+<li class="gogie"><b>Gogie</b>: ...Hey, Ghostus.</li>
+<li class="gogie">Something up?</li>
+<li class="ghostus"><b>Ghostus</b>: Something up!?</li>
+<li class="ghostus">Of course something's up!</li>
+<li class="ghostus">We have to stay in this ridiculous cave for who knows how long and put up with these Pawniard, not to mention some of ours and Bert's team.</li>
+<li class="ghostus">Ugh!</li>
+<li class="ghostus">It just makes me want to knock some stuff around...</li>
+<li class="gogie"><b>Gogie</b>: Well... Sticy Lips said some Pawniards let him use them for bowling practice.</li>
+<li class="ghostus"><b>Ghostus</b>: ...</li>
+<li class="ghostus">That sounds perfect! Even if it is with him!</li>
+<li class="ghostus">I'm off to look right now!</li>
+<li class="gogie" id="ghostusSeenFinish"><b>Gogie</b>: ...Right, then.</li>
+</ul>
+<ul id="ghostusBlurb">
+<li class="ghostus"><b>Ghostus</b>: It just makes me want to knock some stuff around...</li>
+</ul>
+<ul id="ghostusSeenBlurb">
+<li class="ghostus"><b>Ghostus</b>: It just makes me want to knock some stuff around...</li>
+<li class="gogie"><b>Gogie</b>: Well... Sticy Lips said some Pawniards let him use them for bowling practice.</li>
+<li class="ghostus"><b>Ghostus</b>: ...</li>
+<li class="ghostus">That sounds perfect! Even if it is with him!</li>
+<li class="ghostus">I'm off to look right now!</li>
+<li class="gogie" id="ghostusBSeenFinish"><b>Gogie</b>: ...Right, then.</li>
+</ul>
+<ul id="pawniardBlurb">
+<li class="pawniard2"><b>Pawniard</b>: You! Dog-thing!</li>
+<li class="gogie"><b>Gogie</b>: Huh?</li>
+<li class="pawniard2"><b>Pawniard</b>: You are to stay away from this door! We have captured a dangerous creature in here!</li>
+<li class="gogie"><b>Gogie</b>: Alright...</li>
+<li class="gogie">Could you give me some directions, though, given I'm new here?</li>
+<li class="pawniard2"><b>Pawniard</b>: Certainly!</li>
+<li class="pawniard2">You are on B1F, with two caves and the exit to the surface which you no doubt came in from.</li>
+<li class="pawniard2">This cave leads to the larger B2F, where more peoplemons currently are, though as there is a monster, we can not allow you to go in.</li>
+<li class="gogie"><b>Gogie</b>: ...You have something trapped where there are more peoplemons?</li>
+<li class="pawniard2"><b>Pawniard</b>: And we intend to keep it that way!</li>
+<li class="gogie"><b>Gogie</b>: ...Right, then.</li>
+</ul>
+<ul id="venomousGogie">
+<li class="venomous"><b>Venomous</b>: Hey, Gogie.</li>
+<li class="gogie"><b>Gogie</b>: Hey, Venomous.</li>
+<li class="gogie">So, you and Raser are going to Kalos, then?</li>
+<li class="venomous"><b>Venomous</b>: Yeah.</li>
+<li class="venomous">I'll make sure to tell you what it's like.</li>
+<li class="gogie"><b>Gogie</b>: Thanks.</li>
+<li class="gogie">Any advice you can give me about staying here?</li>
+<li class="venomous"><b>Venomous</b>: Well, you were probably going to do it anyway, but...</li>
+<li class="venomous">You should keep your distance from Bert's Monferno.</li>
+<li class="gogie"><b>Gogie</b>: ...Noted.</li>
+</ul>
+<ul id="raserGogie">
+<li class="gogie"><b>Gogie</b>: ...Hey, Raser.</li>
+<li class="raser"><b>Raser</b>: Ah, hello, Gogie.</li>
+<li class="raser">You're improving with socializing with other Fighting-types, then?</li>
+<li class="gogie"><b>Gogie</b>: ...A bit, yeah...</li>
+<li class="gogie">... I don't know if I would have been able to get this close to you a while ago...</li>
+<li class="gogie">Then again, it is really just you... Maybe Phoenix too...</li>
+<li class="raser"><b>Raser</b>: Ah, understandable...</li>
+<li class="raser">Conversing with others will come in time, I suppose.</li>
+<li class="gogie"><b>Gogie</b>: Hopefully...</li>
+<li class="gogie">For now, I guess I'll have to continue being scared by Omega and such.</li>
+<li class="raser"><b>Raser</b>: ...To be fair, Omega scares me as well.</li>
+<li class="gogie"><b>Gogie</b>: Ah...</li>
+</ul>
+<ul id="sticylipsGogie">
+<li class="sticylips"><b>Sticy Lips</b>: Hey, Gogie! :D</li>
+<li class="gogie"><b>Gogie</b>: ...Hey, Sticy Lips.</li>
+<li class="sticylips"><b>Sticy Lips</b>: Did you come to join in on the game? :?</li>
+<li class="gogie"><b>Gogie</b>: What game?</li>
+<li class="sticylips"><b>Sticy Lips</b>: Pawniard Bowling! :3</li>
+<li class="gogie"><b>Gogie</b>: ...Huh?</li>
+<li class="sticylips"><b>Sticy Lips</b>: Oh, pretty much around this time a bunch of Pawniard come in this room to practice something. :)</li>
+<li class="sticylips">They line up in a group of lopsided pins and then I knock them down! :)</li>
+<li class="sticylips">It's fun! :3</li>
+<li class="gogie"><b>Gogie</b>: ...Are they bothered by this at all?</li>
+<li class="sticylips"><b>Sticy Lips</b>: Nope! :3</li>
+<li class="gogie"><b>Gogie</b>: ...Alright, then.</li>
+<li class="gogie">I'm not joining in though, partially because I don't have a good move to act as a ball.</li>
+<li class="sticylips" id="sticyFinish"><b>Sticy Lips</b>: Aw... :(</li>
+</ul>
+<ul id="likewiseGogie">
+<li class="gogie"><b>Gogie</b>: Hello?</li>
+<li class="likewise"><b>Likewise</b>: Hello!</li>
+<li class="gogie"><b>Gogie</b>: Uh, how are you doing?</li>
+<li class="likewise"><b>Likewise</b>: ...</li>
+<li class="gogie"><b>Gogie</b>: Well? Badly?</li>
+<li class="likewise"><b>Likewise</b>: Doing well! ^v^</li>
+<li class="gogie"><b>Gogie</b>: Right, yeah, not used to much conversation with someone who only repeats what I just said...</li>
+<li class="likewise"><b>Likewise</b>: Used to conversation!</li>
+<li class="gogie"><b>Gogie</b>: ...Right, then.</li>
+</ul>
+<ul id="rhyrhyGogie">
+<li class="gogie"><b>Gogie</b>: Uh, hey.</li>
+<li class="rhyrhy"><b>Rhyrhy</b>: ...Hey.</li>
+<li class="gogie"><b>Gogie</b>: Don't know if I see you too much.</li>
+<li class="rhyrhy"><b>Rhyrhy</b>: Not really, no.</li>
+<li class="gogie"><b>Gogie</b>: You... don't talk much, do you?</li>
+<li class="rhyrhy"><b>Rhyrhy</b>: I don't care enough to say much.</li>
+<li class="gogie"><b>Gogie</b>: ...Right, then.</li>
+</ul>
+<ul id="eisschweinGogie">
+<li class="gogie"><b>Gogie</b>: Hey, Eisschwein.</li>
+<li class="eisschwein"><b>Eisschwein</b>: ...</li>
+<li class="gogie"><b>Gogie</b>: ...Eisschwein?</li>
+<li class="eisschwein"><b>Eisschwein</b>: ...</li>
+<li class="gogie"><b>Gogie</b>: Eisschwein!</li>
+<li class="eisschwein"><b>Eisschwein</b>: ...Oh? Huh?</li>
+<li class="eisschwein">Sorry, Gogie, I was too busy staring at the ceiling.</li>
+<li class="eisschwein">The intricacies of this one are just...</li>
+<li class="gogie"><b>Gogie</b>: ...Right, then. I'll let you get back to that.</li>
+</ul>
+<ul id="wrexEncounter">
+<li class="wrex"><b>Wrex</b>: Oh hi! It's nice to meet you! Are you a dog-thing! I love dog-things! I tried to ride one once but I fell off but it's okay because I jumped right back up again! Hey have you ever tried Poffins? I have! They're really tasty! You should try them sometime! And I like berries as well! And I-</li>
+</ul>
+<ul id="bowlingScene">
+<li class="falchion" id="brawl0"><b>Falchion</b>: ...Okay, who do I have to stab <i>this</i> time?</li>
+<li class="sticylips"><b>Sticy Lips</b>: But I've been doing this since you guys were in Orre. :(</li>
+<li class="falchion"><b>Falchion</b>: You WHAT?</li>
+<li class="sticylips"><b>Sticy Lips</b>: But they never complained! D:</li>
+<li class="ghostus" id="brawl0a"><b>Ghostus</b>: Okay, I don't care what's going on here, but I need to blow off steam, so let me Shadow Ball those Pawniard.</li>
+<li class="falchion" id="brawl1"><b>Falchion</b>: No! I am not going to let you use my troops as bowling pins!</li>
+<li class="falchion">Only <i>I</i> get to abuse my authority like that!</li>
+<li class="falchion">And if they didn't complain, then it's because they're idiots!</li>
+<li class="pawniard3"  id="brawl2"><b>Pawniard 1</b>: But sir, it's like target practice!</li>
+<li class="pawniard1"><b>Pawniard A</b>: Yeah! We're just working backwards!</li>
+<li class="falchion"  id="brawl2a"><b>Falchion</b>: You see? Are you telling me that what these dolts need is <i>more</i> heavy blows to the skull?</li>
+<li class="ghostus"><b>Ghostus</b>: YES!</li>
+<li class="falchion"><b>Falchion</b>: ...</li>
+<li class="falchion" id="brawl3">In that case, I think <i>you're</i> the one in need of a few hard knocks around the head.</li>
+<li class="falchion">Assuming you even have anything that could be constituted as a head, of course.</li>
+<li class="ghostus" id="brawl4"><b>Ghostus</b>: Oh, don't try me...</li>
+<li class="gogie"><b>Gogie</b>: <i>...And looks like I'm going to have to try and do something about this somehow...</i></li>
+<li  id="bowlFin"><a href="http://tvtropes.org/pmwiki/posts.php?discussion=12971269370A74820100">Back to Thread</a><br /><a href="javascript:resetGame()">Restart</a></li>
+</ul>
+</div>
+
+<div id="credit">
+<h6>Controls:</h6>
+<p>Arrow keys move.</p>
+<p>Spacebar interacts & pages through text.</p>
+<h6>Sources:</h6>
+<p>Mon sprites found from <a href="http://www.spriters-resource.com/">The Spriters Resource</a>, with some tiles obtained from screenshots on <a href="http://strategywiki.org/wiki/Pokémon_Ruby_and_Sapphire/Slateport_City">Strategy Wiki</a>.</p>
+<p><a href="http://pokegirl4ever.deviantart.com/art/Completed-pokemon-Unova-overworlds-212553542">Fanmade Unova Monsprites</a></p>
+<p>Thanks to Herbert for spagging one of these convos with me</p>
+<p>And thanks to Tangent for letting me use his code for this~</p>
+</div>
+
+</body>
+</html>
+
